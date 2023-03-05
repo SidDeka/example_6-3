@@ -15,6 +15,9 @@
 #include "matrix_keypad.h"
 #include "display.h"
 
+#include "DHT11.h"
+
+
 //=====[Declaration of private defines]========================================
 
 #define DISPLAY_REFRESH_TIME_MS 1000
@@ -25,6 +28,9 @@
 
 DigitalOut incorrectCodeLed(LED3);
 DigitalOut systemBlockedLed(LED2);
+DHT11 humidity_sensor(A3);
+
+
 
 //=====[Declaration of external public global variables]=======================
 
@@ -53,6 +59,8 @@ static void userInterfaceDisplayUpdate();
 
 void userInterfaceInit()
 {
+
+    
     incorrectCodeLed = OFF;
     systemBlockedLed = OFF;
     matrixKeypadInit( SYSTEM_TIME_INCREMENT_MS );
@@ -103,7 +111,7 @@ static void userInterfaceMatrixKeypadUpdate()
 {
     static int numberOfHashKeyReleased = 0;
     char keyReleased = matrixKeypadUpdate();
-
+    
     if( keyReleased != '\0' ) {
 
         if( sirenStateRead() && !systemBlockedStateRead() ) {
@@ -134,46 +142,65 @@ static void userInterfaceDisplayInit()
     displayInit( DISPLAY_CONNECTION_I2C_PCF8574_IO_EXPANDER );
      
     displayCharPositionWrite ( 0,0 );
-    displayStringWrite( "Temperature:" );
+    displayStringWrite( "Humidity:" );
 
-    displayCharPositionWrite ( 0,1 );
-    displayStringWrite( "Gas:" );
+    // displayCharPositionWrite ( 0,1 );
+    // displayStringWrite( "Gas:" );
     
-    displayCharPositionWrite ( 0,2 );
-    displayStringWrite( "Alarm:" );
+    // displayCharPositionWrite ( 0,2 );
+    // displayStringWrite( "Alarm:" );
 }
 
 static void userInterfaceDisplayUpdate()
 {
     static int accumulatedDisplayTime = 0;
-    char temperatureString[3] = "";
+   
+    char humidity_string[5] = "";
+
     
     if( accumulatedDisplayTime >=
         DISPLAY_REFRESH_TIME_MS ) {
-
-        accumulatedDisplayTime = 0;
-
-        sprintf(temperatureString, "%.0f", temperatureSensorReadCelsius());
-        displayCharPositionWrite ( 12,0 );
-        displayStringWrite( temperatureString );
-        displayCharPositionWrite ( 14,0 );
-        displayStringWrite( "'C" );
-
-        displayCharPositionWrite ( 4,1 );
-
-        if ( gasDetectorStateRead() ) {
-            displayStringWrite( "Detected    " );
-        } else {
-            displayStringWrite( "Not Detected" );
-        }
-
-        displayCharPositionWrite ( 6,2 );
         
-        if ( sirenStateRead() ) {
-            displayStringWrite( "ON " );
-        } else {
-            displayStringWrite( "OFF" );
-        }
+        int humidity;
+        accumulatedDisplayTime = 0;
+        
+        //int humidity = humidity_sensor.readHumidity(); // read the humidity value from the sensor
+
+   
+
+     
+        humidity = humidity_sensor.readData(); //reads error code from sensor
+    
+    
+        
+        sprintf(humidity_string, "%d", humidity); // convert the humidity value to a string
+        
+
+        displayCharPositionWrite(10, 0);
+        displayStringWrite(humidity_string);
+        
+        displayCharPositionWrite(13, 0);
+        displayStringWrite("%");
+      
+
+        // displayCharPositionWrite ( 14,0 );
+        // displayStringWrite( "'C" );
+
+        // displayCharPositionWrite ( 4,1 );
+
+        // if ( gasDetectorStateRead() ) {
+        //     displayStringWrite( "Detected    " );
+        // } else {
+        //     displayStringWrite( "Not Detected" );
+        // }
+
+        // displayCharPositionWrite ( 6,2 );
+        
+        // if ( sirenStateRead() ) {
+        //     displayStringWrite( "ON " );
+        // } else {
+        //     displayStringWrite( "OFF" );
+        // }
 
     } else {
         accumulatedDisplayTime =
